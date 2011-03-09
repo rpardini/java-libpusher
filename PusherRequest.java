@@ -1,6 +1,3 @@
-package org.nuklei.main;
-
-
 import java.io.IOException;
 
 import org.apache.http.client.ClientProtocolException;

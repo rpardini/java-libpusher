@@ -1,7 +1,3 @@
-package org.nuklei.main;
-
-
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
