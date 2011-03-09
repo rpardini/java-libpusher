@@ -1,3 +1,5 @@
+package org.nuklei.main;
+
 
 
 import java.io.IOException;
@@ -12,14 +14,20 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.mortbay.log.Log;
 
-import com.google.appengine.api.urlfetch.HTTPHeader;
-import com.google.appengine.api.urlfetch.HTTPMethod;
-import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.google.appengine.api.urlfetch.URLFetchService;
-import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import org.apache.http.Header;
+import org.apache.http.auth.AuthenticationException;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 
 /**
  * Static class to send messages to Pusher's REST API.
@@ -194,7 +202,7 @@ public class Pusher {
      * @param signature
      * @return
      */
-    private static URL buildURI(String uriPath, String query, String signature){
+    private static String buildURI(String uriPath, String query, String signature){
     	StringBuffer buffer = new StringBuffer();
     	//Protocol
     	buffer.append("http://");
@@ -208,12 +216,7 @@ public class Pusher {
     	//Authentication signature
     	buffer.append("&auth_signature=");
     	buffer.append(signature);
-    	//Build URI
-    	try {
-			return new URL(buffer.toString());
-		} catch (MalformedURLException e) {
-			throw new RuntimeException("Malformed URI");
-		}
+    	return buffer.toString();
     }
     
     /**
@@ -222,8 +225,10 @@ public class Pusher {
      * @param event
      * @param jsonData
      * @return
+     * @throws IOException 
+     * @throws ClientProtocolException 
      */
-    public static HTTPResponse triggerPush(String channel, String event, String jsonData){
+    public static String triggerPush(String channel, String event, String jsonData) throws ClientProtocolException, IOException{
     	return triggerPush(channel, event, jsonData, "");
     }
     
@@ -234,8 +239,10 @@ public class Pusher {
      * @param jsonData
      * @param socketId
      * @return
+     * @throws IOException 
+     * @throws ClientProtocolException 
      */
-    public static HTTPResponse triggerPush(String channel, String event, String jsonData, String socketId){
+    public static String triggerPush(String channel, String event, String jsonData, String socketId) throws ClientProtocolException, IOException{
     	//Build URI path
     	String uriPath = buildURIPath(channel);
     	//Build query
@@ -243,20 +250,22 @@ public class Pusher {
     	//Generate signature
     	String signature = buildAuthenticationSignature(uriPath, query);
     	//Build URI
-    	URL url = buildURI(uriPath, query, signature);
-    	
-    	//Create Google APP Engine Fetch URL service and request
-		URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
-		HTTPRequest request = new HTTPRequest(url, HTTPMethod.POST);
-		request.addHeader(new HTTPHeader("Content-Type", "application/json"));
-		request.setPayload(jsonData.getBytes());
-		
+    	String url = buildURI(uriPath, query, signature);
+ 
+	
+		DefaultHttpClient httpClient = new DefaultHttpClient();
+		HttpContext cntxt = new BasicHttpContext();
+						
+		HttpPost httpPost = new HttpPost(url);
+ 		httpPost.addHeader("Content-Type", "application/json");
+		httpPost.setEntity(new StringEntity(jsonData));
+		org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
+			
 		//Start request
 		try {
-			return urlFetchService.fetch(request);
+			return EntityUtils.toString(httpResponse.getEntity());
 		} catch (IOException e) {
 			//Log warning
-			Log.warn("Pusher request could not be send to the following URI " + url.toString());
 			return null;
 		}    	
     }

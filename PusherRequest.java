@@ -1,6 +1,10 @@
+package org.nuklei.main;
 
 
-import com.google.appengine.api.urlfetch.HTTPResponse;
+import java.io.IOException;
+
+import org.apache.http.client.ClientProtocolException;
+
 
 /**
  * An instance of this class can be used to prepopulate properties (event or channel name) with default values
@@ -44,8 +48,10 @@ public class PusherRequest {
 	 * Triggers a new push with default channelName, eventName properties
 	 * @param jsonData
 	 * @return
+	 * @throws IOException 
+	 * @throws ClientProtocolException 
 	 */
-	public HTTPResponse triggerPush(String jsonData){
+	public String triggerPush(String jsonData) throws ClientProtocolException, IOException{
 		return Pusher.triggerPush(channelName, eventName, jsonData);
 	}	
 
@@ -54,8 +60,10 @@ public class PusherRequest {
 	 * @param jsonData
 	 * @param eventName
 	 * @return
+	 * @throws IOException 
+	 * @throws ClientProtocolException 
 	 */
-	public HTTPResponse triggerPush(String jsonData, String eventName){	
+	public String triggerPush(String jsonData, String eventName) throws ClientProtocolException, IOException{	
 		return Pusher.triggerPush(channelName, eventName, jsonData);
 	}
 	
@@ -65,8 +73,10 @@ public class PusherRequest {
 	 * @param eventName
 	 * @param socketId
 	 * @return
+	 * @throws IOException 
+	 * @throws ClientProtocolException 
 	 */
-	public HTTPResponse triggerPush(String jsonData, String eventName, String socketId){	
+	public String triggerPush(String jsonData, String eventName, String socketId) throws ClientProtocolException, IOException{	
 		return Pusher.triggerPush(channelName, eventName, jsonData, socketId);
 	}
 
