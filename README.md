@@ -26,8 +26,6 @@ That's it.
 	
 License
 -------
-Original work Copyright 2010, Stephan Scheuermann. 
-
-Modified work Copyright 2012, John Leacox.
-
+Original work Copyright 2010, Stephan Scheuermann.  
+Modified work Copyright 2012, John Leacox.  
 Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
