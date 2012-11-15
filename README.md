@@ -19,11 +19,13 @@ The second "triggerPush" method provides an additional parameter for the socket_
 
 The PusherRequest class can also be used to encapsulate the event contents:
 
-	PusherRequest request = new PusherRequest("test_channe", "my_event", jsonData);
+	PusherRequest request = new PusherRequest("test_channel", "my_event", jsonData);
 	pusher.triggerPush(request);
 	
 That's it.
 	
 License
 -------
-Copyright 2010, Stephan Scheuermann. Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+Original work Copyright 2010, Stephan Scheuermann. 
+Modified work Copyright 2012, John Leacox.
+Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
