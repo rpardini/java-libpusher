@@ -1,4 +1,4 @@
-Pusher Java classes
+Pusher Rest Java Library
 =========================================
 
 This project can be used to communicate very easily with the Pusher REST API (http://www.pusherapp.com) from any Java application that uses Apache http-commons.
