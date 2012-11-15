@@ -7,7 +7,11 @@ Get Started
 -----------
 First create a Pusher object with your app information:
 
-	Pusher pusher = new Pusher("yourAppId", yourAppKey", "yourAppSecret"); 
+	Pusher pusher = new Pusher("yourAppId", "yourAppKey", "yourAppSecret");
+
+Or if encrypted transport is needed:
+
+	Pusher pusher = new Pusher("yourAppId", "yourAppKey", "yourAppSecret", true);
 	
 Call one of the "triggerPush" and pass channel name, event name and the message body (JSON encoded data) as parameters:
 	

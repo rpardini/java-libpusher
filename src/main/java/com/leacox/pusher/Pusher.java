@@ -34,11 +34,20 @@ public class Pusher {
 	private final String appId;
 	private final String appKey;
 	private final String appSecret;
+	private final boolean isEncrypted;
 
 	public Pusher(String appId, String appKey, String appSecret) {
 		this.appId = appId;
 		this.appKey = appKey;
 		this.appSecret = appSecret;
+		this.isEncrypted = false;
+	}
+
+	public Pusher(String appId, String appKey, String appSecret, boolean isEncrypted) {
+		this.appId = appId;
+		this.appKey = appKey;
+		this.appSecret = appSecret;
+		this.isEncrypted = isEncrypted;
 	}
 
 	public String triggerPush(PusherRequest request) throws ClientProtocolException, IOException {
@@ -176,7 +185,7 @@ public class Pusher {
 	private String buildURI(String uriPath, String query, String signature) {
 		StringBuffer buffer = new StringBuffer();
 		// Protocol
-		buffer.append("http://");
+		buffer.append(getTransportProtocol());
 		// Host
 		buffer.append(pusherHost);
 		// URI Path
@@ -241,6 +250,10 @@ public class Pusher {
 		} catch (InvalidKeyException e) {
 			throw new RuntimeException("Invalid key exception while converting to HMac SHA256");
 		}
+	}
+
+	private String getTransportProtocol() {
+		return isEncrypted ? "https://" : "http://";
 	}
 
 	/**
