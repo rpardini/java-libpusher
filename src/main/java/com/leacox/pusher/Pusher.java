@@ -9,6 +9,7 @@ package com.leacox.pusher;
  */
 
 import com.pusher.api.PusherApi;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -30,9 +31,8 @@ import java.security.NoSuchAlgorithmException;
 public class Pusher implements PusherApi {
 // ------------------------------ FIELDS ------------------------------
 
-    private Logger log = LoggerFactory.getLogger(getClass());
-
     private final static String pusherHost = "api.pusherapp.com";
+    private Logger log = LoggerFactory.getLogger(getClass());
 
     private final String appId;
     private final String appKey;
@@ -94,7 +94,7 @@ public class Pusher implements PusherApi {
 
             log.info(String.format("Sent pusher.com event and got back response '%s'.", httpResponse.getStatusLine()));
             if (!((httpResponse.getStatusLine().getStatusCode() >= 200) && (httpResponse.getStatusLine().getStatusCode() < 300))) {
-                throw new PusherRemoteException(String.format("Remote error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), EntityUtils.toString(httpResponse.getEntity())));
+                throw new PusherRemoteException(String.format("Remote error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), StringUtils.trim(EntityUtils.toString(httpResponse.getEntity()))));
             }
             return EntityUtils.toString(httpResponse.getEntity());
         } catch (PusherRemoteException e) {
