@@ -13,6 +13,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -27,6 +29,8 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Pusher implements PusherApi {
 // ------------------------------ FIELDS ------------------------------
+
+    private Logger log = LoggerFactory.getLogger(getClass());
 
     private final static String pusherHost = "api.pusherapp.com";
 
@@ -69,6 +73,8 @@ public class Pusher implements PusherApi {
      */
     @Override
     public String triggerPush(String channel, String event, String jsonData, String socketId) {
+        if (log.isDebugEnabled())
+            log.debug(String.format("Sending pusher.com push to channel %s with event %s and socketId %s", channel, event, socketId));
         try {
             // Build URI path
             String uriPath = buildURIPath(channel);
@@ -86,14 +92,16 @@ public class Pusher implements PusherApi {
             httpPost.setEntity(new StringEntity(jsonData));
             org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
 
-            if (httpResponse.getStatusLine().getStatusCode() != 200) {
-                throw new PusherRemoteException(String.format("Error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), EntityUtils.toString(httpResponse.getEntity())));
+            log.info(String.format("Sent pusher.com event and got back response '%s'.", httpResponse.getStatusLine()));
+            if (!((httpResponse.getStatusLine().getStatusCode() >= 200) && (httpResponse.getStatusLine().getStatusCode() < 300))) {
+                throw new PusherRemoteException(String.format("Remote error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), EntityUtils.toString(httpResponse.getEntity())));
             }
-
             return EntityUtils.toString(httpResponse.getEntity());
         } catch (PusherRemoteException e) {
+            log.error("pusher.com remote exception", e);
             throw e;
         } catch (Exception e) {
+            log.error("pusher.com general exception", e);
             throw new RuntimeException("Error triggering pusher.com: " + e.getMessage(), e);
         }
     }

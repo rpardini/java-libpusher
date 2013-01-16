@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.leacox</groupId>
     <artifactId>java-libpusher</artifactId>
-    <version>1.0.3-RELEASE</version>
+    <version>1.0.4-RELEASE</version>
     <name>Pusher Rest Library</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,6 +25,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.2</version>
         </dependency>
 
         <dependency>
