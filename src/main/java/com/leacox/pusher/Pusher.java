@@ -8,7 +8,6 @@ package com.leacox.pusher;
  * http://www.opensource.org/licenses/mit-license.php
  */
 
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -16,7 +15,6 @@ import org.apache.http.util.EntityUtils;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -54,65 +52,50 @@ public class Pusher {
 
 // -------------------------- OTHER METHODS --------------------------
 
-    public String triggerPush(PusherRequest request) throws ClientProtocolException, IOException {
+    public String triggerPush(PusherRequest request) {
         return triggerPush(request.getChannelName(), request.getEventName(), request.getJsonData(),
                 request.getSocketId());
     }
 
     /**
      * Delivers a message to the Pusher API without providing a socket_id
-     *
-     * @param channel
-     * @param event
-     * @param jsonData
-     * @return
-     * @throws IOException
-     * @throws ClientProtocolException
      */
-    public String triggerPush(String channel, String event, String jsonData) throws ClientProtocolException,
-            IOException {
+    public String triggerPush(String channel, String event, String jsonData) {
         return triggerPush(channel, event, jsonData, "");
     }
 
     /**
      * Delivers a message to the Pusher API
-     *
-     * @param channel
-     * @param event
-     * @param jsonData
-     * @param socketId
-     * @return
-     * @throws IOException
-     * @throws ClientProtocolException
      */
-    public String triggerPush(String channel, String event, String jsonData, String socketId)
-            throws ClientProtocolException, IOException {
-        // Build URI path
-        String uriPath = buildURIPath(channel);
-        // Build query
-        String query = buildQuery(event, jsonData, socketId);
-        // Generate signature
-        String signature = buildAuthenticationSignature(uriPath, query);
-        // Build URI
-        String url = buildURI(uriPath, query, signature);
+    public String triggerPush(String channel, String event, String jsonData, String socketId) {
+        try {
+            // Build URI path
+            String uriPath = buildURIPath(channel);
+            // Build query
+            String query = buildQuery(event, jsonData, socketId);
+            // Generate signature
+            String signature = buildAuthenticationSignature(uriPath, query);
+            // Build URI
+            String url = buildURI(uriPath, query, signature);
 
-        DefaultHttpClient httpClient = new DefaultHttpClient();
+            DefaultHttpClient httpClient = new DefaultHttpClient();
 
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.addHeader("Content-Type", "application/json");
-        httpPost.setEntity(new StringEntity(jsonData));
-        org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
+            HttpPost httpPost = new HttpPost(url);
+            httpPost.addHeader("Content-Type", "application/json");
+            httpPost.setEntity(new StringEntity(jsonData));
+            org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
 
-        return EntityUtils.toString(httpResponse.getEntity());
+            return EntityUtils.toString(httpResponse.getEntity());
+        } catch (Exception e) {
+            throw new RuntimeException("Error triggering pusher.com: " + e.getMessage(), e);
+        }
     }
 
     /**
      * Build path of the URI that is also required for Authentication
-     *
-     * @return
      */
     private String buildURIPath(String channelName) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         // Application ID
         buffer.append("/apps/");
         buffer.append(appId);
@@ -127,13 +110,9 @@ public class Pusher {
 
     /**
      * Build query string that will be appended to the URI and HMAC/SHA256 encoded
-     *
-     * @param eventName
-     * @param jsonData
-     * @return
      */
     private String buildQuery(String eventName, String jsonData, String socketID) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         // Auth_Key
         buffer.append("auth_key=");
         buffer.append(appKey);
@@ -159,9 +138,6 @@ public class Pusher {
 
     /**
      * Returns a md5 representation of the given string
-     *
-     * @param data
-     * @return
      */
     private static String md5Representation(String data) {
         try {
@@ -180,9 +156,6 @@ public class Pusher {
 
     /**
      * Converts a byte array to a string representation
-     *
-     * @param data
-     * @return
      */
     private static String byteArrayToString(byte[] data) {
         BigInteger bigInteger = new BigInteger(1, data);
@@ -196,13 +169,9 @@ public class Pusher {
 
     /**
      * Build authentication signature to assure that our event is recognized by Pusher
-     *
-     * @param uriPath
-     * @param query
-     * @return
      */
     private String buildAuthenticationSignature(String uriPath, String query) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         // request method
         buffer.append("POST\n");
         // URI Path
@@ -217,9 +186,6 @@ public class Pusher {
 
     /**
      * Returns a HMAC/SHA256 representation of the given data.
-     *
-     * @param data
-     * @return
      */
     private String hmacsha256Representation(String data) {
         try {
@@ -231,7 +197,8 @@ public class Pusher {
             mac.init(signingKey);
 
             // Process and return data
-            byte[] digest = mac.doFinal(data.getBytes("UTF-8"));
+            byte[] digest;
+            // @TODO: decide if it's UTF-8 or not... digest = mac.doFinal(data.getBytes("UTF-8"));
             digest = mac.doFinal(data.getBytes());
             // Convert to string
             BigInteger bigInteger = new BigInteger(1, digest);
@@ -239,9 +206,9 @@ public class Pusher {
         } catch (NoSuchAlgorithmException nsae) {
             // We should never come here, because GAE has HMac SHA256
             throw new RuntimeException("No HMac SHA256 algorithm");
-        } catch (UnsupportedEncodingException e) {
+        //} catch (UnsupportedEncodingException e) {
             // We should never come here, because UTF-8 should be available
-            throw new RuntimeException("No UTF-8");
+            //throw new RuntimeException("No UTF-8");
         } catch (InvalidKeyException e) {
             throw new RuntimeException("Invalid key exception while converting to HMac SHA256");
         }
@@ -249,14 +216,9 @@ public class Pusher {
 
     /**
      * Build URI where request is send to
-     *
-     * @param uriPath
-     * @param query
-     * @param signature
-     * @return
      */
     private String buildURI(String uriPath, String query, String signature) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         // Protocol
         buffer.append(getTransportProtocol());
         // Host

@@ -21,11 +21,6 @@ public class PusherRequest {
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
-    /**
-     * @param eventName
-     * @param channelName
-     * @param jsonData
-     */
     public PusherRequest(String channelName, String eventName, String jsonData) {
         this.channelName = channelName;
         this.eventName = eventName;
@@ -33,12 +28,6 @@ public class PusherRequest {
         this.socketId = "";
     }
 
-    /**
-     * @param eventName
-     * @param channelName
-     * @param jsonData
-     * @param socketId
-     */
     public PusherRequest(String channelName, String eventName, String jsonData, String socketId) {
         this.channelName = channelName;
         this.eventName = eventName;
