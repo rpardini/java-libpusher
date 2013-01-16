@@ -8,6 +8,7 @@ package com.leacox.pusher;
  * http://www.opensource.org/licenses/mit-license.php
  */
 
+import com.pusher.api.PusherApi;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -24,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * A class to send messages to Pusher's REST API.
  */
-public class Pusher {
+public class Pusher implements PusherApi {
 // ------------------------------ FIELDS ------------------------------
 
     private final static String pusherHost = "api.pusherapp.com";
@@ -50,16 +51,15 @@ public class Pusher {
         this.isEncrypted = isEncrypted;
     }
 
-// -------------------------- OTHER METHODS --------------------------
+// ------------------------ INTERFACE METHODS ------------------------
 
-    public String triggerPush(PusherRequest request) {
-        return triggerPush(request.getChannelName(), request.getEventName(), request.getJsonData(),
-                request.getSocketId());
-    }
+
+// --------------------- Interface PusherApi ---------------------
 
     /**
      * Delivers a message to the Pusher API without providing a socket_id
      */
+    @Override
     public String triggerPush(String channel, String event, String jsonData) {
         return triggerPush(channel, event, jsonData, "");
     }
@@ -67,6 +67,7 @@ public class Pusher {
     /**
      * Delivers a message to the Pusher API
      */
+    @Override
     public String triggerPush(String channel, String event, String jsonData, String socketId) {
         try {
             // Build URI path
@@ -85,27 +86,65 @@ public class Pusher {
             httpPost.setEntity(new StringEntity(jsonData));
             org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
 
+            if (httpResponse.getStatusLine().getStatusCode() != 200) {
+                throw new PusherRemoteException(String.format("Error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), EntityUtils.toString(httpResponse.getEntity())));
+            }
+
             return EntityUtils.toString(httpResponse.getEntity());
+        } catch (PusherRemoteException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error triggering pusher.com: " + e.getMessage(), e);
         }
     }
 
+// -------------------------- OTHER METHODS --------------------------
+
     /**
-     * Build path of the URI that is also required for Authentication
+     * Build authentication signature to assure that our event is recognized by Pusher
      */
-    private String buildURIPath(String channelName) {
+    private String buildAuthenticationSignature(String uriPath, String query) {
         StringBuilder buffer = new StringBuilder();
-        // Application ID
-        buffer.append("/apps/");
-        buffer.append(appId);
-        // Channel name
-        buffer.append("/channels/");
-        buffer.append(channelName);
-        // Event
-        buffer.append("/events");
-        // Return content of buffer
-        return buffer.toString();
+        // request method
+        buffer.append("POST\n");
+        // URI Path
+        buffer.append(uriPath);
+        buffer.append("\n");
+        // Query string
+        buffer.append(query);
+        // Encode data
+        String h = buffer.toString();
+        return hmacsha256Representation(h);
+    }
+
+    /**
+     * Returns a HMAC/SHA256 representation of the given data.
+     */
+    private String hmacsha256Representation(String data) {
+        try {
+            // Create the HMAC/SHA256 key from application secret
+            final SecretKeySpec signingKey = new SecretKeySpec(appSecret.getBytes(), "HmacSHA256");
+
+            // Create the message authentication code (MAC)
+            final Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(signingKey);
+
+            // Process and return data
+            byte[] digest;
+            // @TODO: decide if it's UTF-8 or not... digest = mac.doFinal(data.getBytes("UTF-8"));
+            digest = mac.doFinal(data.getBytes());
+            // Convert to string
+            BigInteger bigInteger = new BigInteger(1, digest);
+            return String.format("%0" + (digest.length << 1) + "x", bigInteger);
+        } catch (NoSuchAlgorithmException nsae) {
+            // We should never come here, because GAE has HMac SHA256
+            throw new RuntimeException("No HMac SHA256 algorithm");
+            //} catch (UnsupportedEncodingException e) {
+            // We should never come here, because UTF-8 should be available
+            //throw new RuntimeException("No UTF-8");
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException("Invalid key exception while converting to HMac SHA256");
+        }
     }
 
     /**
@@ -168,53 +207,6 @@ public class Pusher {
     }
 
     /**
-     * Build authentication signature to assure that our event is recognized by Pusher
-     */
-    private String buildAuthenticationSignature(String uriPath, String query) {
-        StringBuilder buffer = new StringBuilder();
-        // request method
-        buffer.append("POST\n");
-        // URI Path
-        buffer.append(uriPath);
-        buffer.append("\n");
-        // Query string
-        buffer.append(query);
-        // Encode data
-        String h = buffer.toString();
-        return hmacsha256Representation(h);
-    }
-
-    /**
-     * Returns a HMAC/SHA256 representation of the given data.
-     */
-    private String hmacsha256Representation(String data) {
-        try {
-            // Create the HMAC/SHA256 key from application secret
-            final SecretKeySpec signingKey = new SecretKeySpec(appSecret.getBytes(), "HmacSHA256");
-
-            // Create the message authentication code (MAC)
-            final Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(signingKey);
-
-            // Process and return data
-            byte[] digest;
-            // @TODO: decide if it's UTF-8 or not... digest = mac.doFinal(data.getBytes("UTF-8"));
-            digest = mac.doFinal(data.getBytes());
-            // Convert to string
-            BigInteger bigInteger = new BigInteger(1, digest);
-            return String.format("%0" + (digest.length << 1) + "x", bigInteger);
-        } catch (NoSuchAlgorithmException nsae) {
-            // We should never come here, because GAE has HMac SHA256
-            throw new RuntimeException("No HMac SHA256 algorithm");
-        //} catch (UnsupportedEncodingException e) {
-            // We should never come here, because UTF-8 should be available
-            //throw new RuntimeException("No UTF-8");
-        } catch (InvalidKeyException e) {
-            throw new RuntimeException("Invalid key exception while converting to HMac SHA256");
-        }
-    }
-
-    /**
      * Build URI where request is send to
      */
     private String buildURI(String uriPath, String query, String signature) {
@@ -236,5 +228,27 @@ public class Pusher {
 
     private String getTransportProtocol() {
         return isEncrypted ? "https://" : "http://";
+    }
+
+    /**
+     * Build path of the URI that is also required for Authentication
+     */
+    private String buildURIPath(String channelName) {
+        StringBuilder buffer = new StringBuilder();
+        // Application ID
+        buffer.append("/apps/");
+        buffer.append(appId);
+        // Channel name
+        buffer.append("/channels/");
+        buffer.append(channelName);
+        // Event
+        buffer.append("/events");
+        // Return content of buffer
+        return buffer.toString();
+    }
+
+    public String triggerPush(PusherRequest request) {
+        return triggerPush(request.getChannelName(), request.getEventName(), request.getJsonData(),
+                request.getSocketId());
     }
 }
