@@ -9,6 +9,7 @@ package com.leacox.pusher;
  */
 
 import com.pusher.api.PusherApi;
+import net.pardini.proxy.autodetect.ProxyAutodetector;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -39,6 +40,8 @@ public class Pusher implements PusherApi {
     private final String appSecret;
     private final boolean isEncrypted;
 
+    private ProxyAutodetector proxyAutodetector;
+
 // --------------------------- CONSTRUCTORS ---------------------------
 
     public Pusher(String appId, String appKey, String appSecret) {
@@ -53,6 +56,12 @@ public class Pusher implements PusherApi {
         this.appKey = appKey;
         this.appSecret = appSecret;
         this.isEncrypted = isEncrypted;
+    }
+
+// --------------------- GETTER / SETTER METHODS ---------------------
+
+    public void setProxyAutodetector(final ProxyAutodetector proxyAutodetector) {
+        this.proxyAutodetector = proxyAutodetector;
     }
 
 // ------------------------ INTERFACE METHODS ------------------------
@@ -86,6 +95,9 @@ public class Pusher implements PusherApi {
             String url = buildURI(uriPath, query, signature);
 
             DefaultHttpClient httpClient = new DefaultHttpClient();
+            if (proxyAutodetector != null) {
+                proxyAutodetector.setProxyForHttpClient(httpClient, url);
+            }
 
             HttpPost httpPost = new HttpPost(url);
             httpPost.addHeader("Content-Type", "application/json");
