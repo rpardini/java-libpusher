@@ -9,6 +9,7 @@ package com.leacox.pusher;
  */
 
 import com.pusher.api.PusherApi;
+import com.pusher.api.PusherUserAuth;
 import net.pardini.proxy.autodetect.ProxyAutodetector;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.HttpPost;
@@ -68,6 +69,25 @@ public class Pusher implements PusherApi {
 
 
 // --------------------- Interface PusherApi ---------------------
+
+    @Override
+    public PusherUserAuth getUserAuth(String sockedId, String channel) {
+        return this.getUserAuth(sockedId, channel, null);
+    }
+
+    @Override
+    public PusherUserAuth getUserAuth(String sockedId, String channel, String data) {
+        PusherUserAuth auth = new PusherUserAuth();
+
+        String sign = String.format("%s:%s", sockedId, channel);
+        if (!StringUtils.isEmpty(data)) {
+            sign += String.format(":%s", data);
+            auth.setChannel_data(data);
+        }
+
+        auth.setAuth(String.format("%s:%s", this.appKey, this.hmacsha256Representation(sign)));
+        return auth;
+    }
 
     /**
      * Delivers a message to the Pusher API without providing a socket_id
