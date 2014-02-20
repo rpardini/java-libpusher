@@ -122,13 +122,18 @@ public class Pusher implements PusherApi {
             HttpPost httpPost = new HttpPost(url);
             httpPost.addHeader("Content-Type", "application/json");
             httpPost.setEntity(new StringEntity(jsonData));
-            org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
+            try{
+                org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
 
-            log.info(String.format("Sent pusher.com event and got back response '%s'.", httpResponse.getStatusLine()));
-            if (!((httpResponse.getStatusLine().getStatusCode() >= 200) && (httpResponse.getStatusLine().getStatusCode() < 300))) {
-                throw new PusherRemoteException(String.format("Remote error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), StringUtils.trim(EntityUtils.toString(httpResponse.getEntity()))));
+                log.info(String.format("Sent pusher.com event and got back response '%s'.", httpResponse.getStatusLine()));
+                if (!((httpResponse.getStatusLine().getStatusCode() >= 200) && (httpResponse.getStatusLine().getStatusCode() < 300))) {
+                    throw new PusherRemoteException(String.format("Remote error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), StringUtils.trim(EntityUtils.toString(httpResponse.getEntity()))));
+                }
+
+                return EntityUtils.toString(httpResponse.getEntity());
+            }finally {
+                httpPost.releaseConnection();
             }
-            return EntityUtils.toString(httpResponse.getEntity());
         } catch (PusherRemoteException e) {
             log.error("pusher.com remote exception", e);
             throw e;
