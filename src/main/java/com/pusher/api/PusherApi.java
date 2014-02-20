@@ -8,6 +8,16 @@ public interface PusherApi {
 // -------------------------- OTHER METHODS --------------------------
 
     /**
+     * Provides a representation of user authentication without data
+     */
+    PusherUserAuth getUserAuth(String sockedId, String channel);
+
+    /**
+     * Provides a representation of user authentication
+     */
+    PusherUserAuth getUserAuth(String sockedId, String channel, String data);
+
+    /**
      * Delivers a message to the Pusher API without providing a socket_id
      */
     String triggerPush(String channel, String event, String jsonData);
