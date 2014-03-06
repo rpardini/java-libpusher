@@ -1,5 +1,7 @@
 package com.pusher.api;
 
+import com.leacox.pusher.PusherRequest;
+
 /**
  * Interface for sending pushes to pusher.com.
  * Attention: this is NOT provided by pusher.com, nor is it canon. Please take this with a grain of salt.
@@ -26,4 +28,13 @@ public interface PusherApi {
      * Delivers a message to the Pusher API
      */
     String triggerPush(String channel, String event, String jsonData, String socketId);
+
+    /**
+     * Delivers a message to the Pusher API
+     */
+    String triggerPush(String channel, String event, String jsonData, String socketId, Integer timeout);
+    /**
+     * Delivers a message to the Pusher API
+     */
+    String triggerPush(PusherRequest pusherRequest);
 }

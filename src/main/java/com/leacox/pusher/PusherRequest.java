@@ -18,6 +18,7 @@ public class PusherRequest {
     private final String channelName;
     private final String jsonData;
     private final String socketId;
+    private final Integer timeout;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
@@ -26,6 +27,7 @@ public class PusherRequest {
         this.eventName = eventName;
         this.jsonData = jsonData;
         this.socketId = "";
+        this.timeout = null;
     }
 
     public PusherRequest(String channelName, String eventName, String jsonData, String socketId) {
@@ -33,6 +35,15 @@ public class PusherRequest {
         this.eventName = eventName;
         this.jsonData = jsonData;
         this.socketId = socketId;
+        this.timeout = null;
+    }
+
+    public PusherRequest(String eventName, String channelName, String jsonData, String socketId, Integer timeout) {
+        this.eventName = eventName;
+        this.channelName = channelName;
+        this.jsonData = jsonData;
+        this.socketId = socketId;
+        this.timeout = timeout;
     }
 
 // --------------------- GETTER / SETTER METHODS ---------------------
@@ -51,5 +62,9 @@ public class PusherRequest {
 
     public String getSocketId() {
         return socketId;
+    }
+
+    public Integer getTimeout() {
+        return timeout;
     }
 }
