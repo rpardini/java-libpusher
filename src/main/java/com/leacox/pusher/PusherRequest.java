@@ -23,22 +23,14 @@ public class PusherRequest {
 // --------------------------- CONSTRUCTORS ---------------------------
 
     public PusherRequest(String channelName, String eventName, String jsonData) {
-        this.channelName = channelName;
-        this.eventName = eventName;
-        this.jsonData = jsonData;
-        this.socketId = "";
-        this.timeout = null;
+        this(channelName, eventName, jsonData, "");
     }
 
     public PusherRequest(String channelName, String eventName, String jsonData, String socketId) {
-        this.channelName = channelName;
-        this.eventName = eventName;
-        this.jsonData = jsonData;
-        this.socketId = socketId;
-        this.timeout = null;
+        this(channelName, eventName, jsonData, socketId, null);
     }
 
-    public PusherRequest(String eventName, String channelName, String jsonData, String socketId, Integer timeout) {
+    public PusherRequest(String channelName, String eventName, String jsonData, String socketId, Integer timeout) {
         this.eventName = eventName;
         this.channelName = channelName;
         this.jsonData = jsonData;
