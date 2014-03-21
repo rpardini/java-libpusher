@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.leacox</groupId>
     <artifactId>java-libpusher</artifactId>
-    <version>1.2.3-RELEASE</version>
+    <version>1.2.4-RELEASE</version>
     <name>Pusher Rest Library (heavily modified)</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

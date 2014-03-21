@@ -129,15 +129,14 @@ public class Pusher implements PusherApi {
             String url = buildURI(uriPath, query, signature);
 
             DefaultHttpClient httpClient = new DefaultHttpClient();
-            if (proxyAutodetector != null) {
-                proxyAutodetector.setProxyForHttpClient(httpClient, url);
-            }
 
             if (pusherRequest.getTimeout() != null) {
-                HttpParams params = new BasicHttpParams();
-                HttpConnectionParams.setConnectionTimeout(params, pusherRequest.getTimeout());
-                HttpConnectionParams.setSoTimeout(params, pusherRequest.getTimeout());
-                httpClient.setParams(params);
+                HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), pusherRequest.getTimeout());
+                HttpConnectionParams.setSoTimeout(httpClient.getParams(), pusherRequest.getTimeout());
+            }
+
+            if (proxyAutodetector != null) {
+                proxyAutodetector.setProxyForHttpClient(httpClient, url);
             }
 
             HttpPost httpPost = new HttpPost(url);
