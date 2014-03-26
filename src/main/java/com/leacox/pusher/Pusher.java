@@ -26,6 +26,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -141,7 +142,7 @@ public class Pusher implements PusherApi {
 
             HttpPost httpPost = new HttpPost(url);
             httpPost.addHeader("Content-Type", "application/json");
-            httpPost.setEntity(new StringEntity(pusherRequest.getJsonData()));
+            httpPost.setEntity(new StringEntity(pusherRequest.getJsonData(), Charset.forName("UTF-8")));
             try{
                 org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
 
@@ -247,7 +248,7 @@ public class Pusher implements PusherApi {
         try {
             // Get MD5 MessageDigest
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-            byte[] digest = messageDigest.digest(data.getBytes("US-ASCII"));
+            byte[] digest = messageDigest.digest(data.getBytes("UTF-8"));
             return byteArrayToString(digest);
         } catch (NoSuchAlgorithmException nsae) {
             // We should never come here, because GAE has a MD5 algorithm
