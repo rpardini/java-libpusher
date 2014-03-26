@@ -15,6 +15,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,33 +105,55 @@ public class Pusher implements PusherApi {
      */
     @Override
     public String triggerPush(String channel, String event, String jsonData, String socketId) {
+        return triggerPush(channel, event, jsonData, socketId, null);
+    }
+
+    @Override
+    public String triggerPush(String channel, String event, String jsonData, String socketId, Integer timeout) {
+        PusherRequest request = new PusherRequest(channel, event, jsonData, socketId, timeout);
+        return triggerPush(request);
+    }
+
+    @Override
+    public String triggerPush(PusherRequest pusherRequest) {
         if (log.isDebugEnabled())
-            log.debug(String.format("Sending pusher.com push to channel %s with event %s and socketId %s", channel, event, socketId));
+            log.debug(String.format("Sending pusher.com push to channel %s with event %s and socketId %s", pusherRequest.getChannelName(), pusherRequest.getEventName(), pusherRequest.getSocketId()));
         try {
             // Build URI path
-            String uriPath = buildURIPath(channel);
+            String uriPath = buildURIPath(pusherRequest.getChannelName());
             // Build query
-            String query = buildQuery(event, jsonData, socketId);
+            String query = buildQuery(pusherRequest.getEventName(), pusherRequest.getJsonData(), pusherRequest.getSocketId());
             // Generate signature
             String signature = buildAuthenticationSignature(uriPath, query);
             // Build URI
             String url = buildURI(uriPath, query, signature);
 
             DefaultHttpClient httpClient = new DefaultHttpClient();
+
+            if (pusherRequest.getTimeout() != null) {
+                HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), pusherRequest.getTimeout());
+                HttpConnectionParams.setSoTimeout(httpClient.getParams(), pusherRequest.getTimeout());
+            }
+
             if (proxyAutodetector != null) {
                 proxyAutodetector.setProxyForHttpClient(httpClient, url);
             }
 
             HttpPost httpPost = new HttpPost(url);
             httpPost.addHeader("Content-Type", "application/json");
-            httpPost.setEntity(new StringEntity(jsonData));
-            org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
+            httpPost.setEntity(new StringEntity(pusherRequest.getJsonData()));
+            try{
+                org.apache.http.HttpResponse httpResponse = httpClient.execute(httpPost);
 
-            log.info(String.format("Sent pusher.com event and got back response '%s'.", httpResponse.getStatusLine()));
-            if (!((httpResponse.getStatusLine().getStatusCode() >= 200) && (httpResponse.getStatusLine().getStatusCode() < 300))) {
-                throw new PusherRemoteException(String.format("Remote error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), StringUtils.trim(EntityUtils.toString(httpResponse.getEntity()))));
+                log.info(String.format("Sent pusher.com event and got back response '%s'.", httpResponse.getStatusLine()));
+                if (!((httpResponse.getStatusLine().getStatusCode() >= 200) && (httpResponse.getStatusLine().getStatusCode() < 300))) {
+                    throw new PusherRemoteException(String.format("Remote error from pusher.com: [%s] (%s)", httpResponse.getStatusLine(), StringUtils.trim(EntityUtils.toString(httpResponse.getEntity()))));
+                }
+
+                return EntityUtils.toString(httpResponse.getEntity());
+            }finally {
+                httpPost.releaseConnection();
             }
-            return EntityUtils.toString(httpResponse.getEntity());
         } catch (PusherRemoteException e) {
             log.error("pusher.com remote exception", e);
             throw e;
@@ -285,10 +310,5 @@ public class Pusher implements PusherApi {
         buffer.append("/events");
         // Return content of buffer
         return buffer.toString();
-    }
-
-    public String triggerPush(PusherRequest request) {
-        return triggerPush(request.getChannelName(), request.getEventName(), request.getJsonData(),
-                request.getSocketId());
     }
 }
