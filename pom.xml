@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.leacox</groupId>
     <artifactId>java-libpusher</artifactId>
-    <version>1.2.5-RELEASE</version>
+    <version>1.2.6-RELEASE</version>
     <name>Pusher Rest Library (heavily modified)</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -13,18 +13,29 @@
 
     <distributionManagement>
         <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>googlecode</id>
-            <url>svn:https://me-ceap-maven.googlecode.com/svn/maven</url>
+            <id>s3.release</id>
+            <url>s3://ceapmaven-prod-repo/release</url>
         </repository>
     </distributionManagement>
+
+    <repositories>
+        <!-- ME's own repository at Amazon S3. -->
+        <repository>
+            <id>ceap-s3-repo-prod</id>
+            <url>https://s3-sa-east-1.amazonaws.com/ceapmaven-prod-repo/release</url>
+            <name>ME S3 CEAP Repo PROD</name>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencies>
 
         <dependency>
             <groupId>net.pardini</groupId>
             <artifactId>proxy-autodetect-java</artifactId>
-            <version>0.0.1-RELEASE</version>
+            <version>0.0.2-RELEASE</version>
         </dependency>
 
         <dependency>
@@ -76,9 +87,9 @@
 
         <extensions>
             <extension>
-                <groupId>com.google.code.maven-svn-wagon</groupId>
-                <artifactId>maven-svn-wagon</artifactId>
-                <version>1.4</version>
+                <groupId>org.kuali.maven.wagons</groupId>
+                <artifactId>maven-s3-wagon</artifactId>
+                <version>1.2.1</version>
             </extension>
         </extensions>
     </build>
